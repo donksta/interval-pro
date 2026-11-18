@@ -1,9 +1,9 @@
-const CACHE = 'interval-pro-v5';
+const CACHE = 'interval-pro-v8';
 const ASSETS = [
   './',
   './index.html',
   './styles.css',
-  './app.js?v=5',
+  './app.js?v=8',
   './manifest.webmanifest',
   './icons/icon.svg'
 ];
@@ -27,21 +27,19 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const request = event.request;
   const url = new URL(request.url);
-  const isAppShell = request.mode === 'navigate' ||
+  const appShell = request.mode === 'navigate' ||
     url.pathname.endsWith('/index.html') ||
-    url.pathname.endsWith('/app.js');
+    url.pathname.endsWith('/app.js?v=8');
 
-  if (isAppShell) {
+  if (appShell) {
     event.respondWith(
-      fetch(request)
-        .then(response => {
-          if (response && response.ok) {
-            const copy = response.clone();
-            caches.open(CACHE).then(cache => cache.put(request, copy));
-          }
-          return response;
-        })
-        .catch(() => caches.match(request).then(hit => hit || caches.match('./index.html')))
+      fetch(request).then(response => {
+        if (response && response.ok) {
+          const copy = response.clone();
+          caches.open(CACHE).then(cache => cache.put(request, copy));
+        }
+        return response;
+      }).catch(() => caches.match(request).then(hit => hit || caches.match('./index.html')))
     );
     return;
   }
