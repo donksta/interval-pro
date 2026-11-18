@@ -1,9 +1,9 @@
-const CACHE = 'interval-pro-v8';
+const CACHE = 'interval-pro-v9';
 const ASSETS = [
   './',
   './index.html',
   './styles.css',
-  './app.js?v=8',
+  './app.js?v=9',
   './manifest.webmanifest',
   './icons/icon.svg'
 ];
@@ -29,7 +29,7 @@ self.addEventListener('fetch', event => {
   const url = new URL(request.url);
   const appShell = request.mode === 'navigate' ||
     url.pathname.endsWith('/index.html') ||
-    url.pathname.endsWith('/app.js?v=8');
+    url.pathname.endsWith('/app.js?v=9');
 
   if (appShell) {
     event.respondWith(
