@@ -1,7 +1,29 @@
 const $=id=>document.getElementById(id);
 const defaults={prep:10,work:20,rest:10,rounds:8,sets:1,setRest:60};
 let cfg={...defaults}, phase='work', remaining=20, running=false, tickId=null, phaseEndAt=0, runStartedAt=0, elapsedBase=0, phaseDuration=20, round=1, set=1, voice=true,sounds=true;
+let wakeLock=null, wakeLockNoticeShown=false;
 let history=JSON.parse(localStorage.getItem('ip_history')||'[]'), saved=JSON.parse(localStorage.getItem('ip_saved')||'[]');
+
+async function acquireWakeLock(){
+ if(!running || !('wakeLock' in navigator) || document.visibilityState!=='visible')return;
+ try{
+   if(wakeLock && !wakeLock.released)return;
+   wakeLock=await navigator.wakeLock.request('screen');
+   wakeLock.addEventListener('release',()=>{wakeLock=null;});
+ }catch(err){
+   wakeLock=null;
+   if(!wakeLockNoticeShown){
+     wakeLockNoticeShown=true;
+     toast('Screen may lock: set iPhone Auto-Lock to Never');
+   }
+ }
+}
+async function releaseWakeLock(){
+ if(!wakeLock)return;
+ const lock=wakeLock;
+ wakeLock=null;
+ try{await lock.release();}catch(err){}
+}
 const circumference=2*Math.PI*132;
 const fmt=s=>{s=Math.max(0,Math.ceil(s));return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`};
 const totalSecs=()=>cfg.sets*(cfg.rounds*(cfg.work+cfg.rest)-cfg.rest)+Math.max(0,cfg.sets-1)*cfg.setRest;
@@ -35,6 +57,7 @@ function start(){
  if(phase==='done')reset();
  if(elapsedBase===0 && phase==='work' && remaining===cfg.work && cfg.prep>0)setPhase('prep',cfg.prep);
  running=true;
+ acquireWakeLock();
  const now=Date.now();
  runStartedAt=now;
  phaseEndAt=now+remaining*1000;
@@ -46,7 +69,7 @@ function pause(){
  const now=Date.now();
  remaining=Math.max(0,Math.ceil((phaseEndAt-now)/1000));
  elapsedBase+=(now-runStartedAt)/1000;
- running=false;clearInterval(tickId);tickId=null;updateUI();
+ running=false;clearInterval(tickId);tickId=null;releaseWakeLock();updateUI();
 }
 function tick(){
  const now=Date.now();
@@ -93,7 +116,7 @@ function finish(){
  if(running){
    const now=Date.now();
    elapsedBase+=(now-runStartedAt)/1000;
-   running=false;clearInterval(tickId);tickId=null;
+   running=false;clearInterval(tickId);tickId=null;releaseWakeLock();
  }
  phase='done';remaining=0;phaseDuration=1;updateUI();
  beep(1100,.35);speak('Workout complete. Great work.');
@@ -104,6 +127,7 @@ function finish(){
 }
 function reset(){
  if(running){running=false;clearInterval(tickId);tickId=null}
+ releaseWakeLock();
  phase='work';remaining=cfg.work;phaseDuration=cfg.work;round=1;set=1;elapsedBase=0;phaseEndAt=0;runStartedAt=0;updateUI();
 }
 function skip(){if(!running)return;advance();}
@@ -123,6 +147,13 @@ $('savePresetBtn').onclick=()=>{let name=prompt('Name this workout:','My workout
 $('settingsBtn').onclick=()=>$('settingsModal').classList.remove('hidden');$('closeSettings').onclick=()=>$('settingsModal').classList.add('hidden');
 $('voiceToggle').onchange=e=>voice=e.target.checked;$('soundToggle').onchange=e=>sounds=e.target.checked;
 $('clearHistory').onclick=()=>{if(confirm('Clear all workout history?')){history=[];localStorage.setItem('ip_history','[]');renderHistory()}};
-document.addEventListener('visibilitychange',()=>{if(document.hidden&&running){/* iOS may throttle web timers in background; elapsed time is based on wall clock */}});
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden){
+   // A screen wake lock is released by the browser when the page is backgrounded.
+   // The app requests it again when the user returns, if the workout is still running.
+   return;
+ }
+ if(running)acquireWakeLock();
+});
 fillInputs();remaining=cfg.work;phaseDuration=cfg.work;updateUI();renderSaved();renderHistory();
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
