@@ -1,0 +1,17 @@
+{
+  "name": "Interval Pro",
+  "short_name": "Interval Pro",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#101214",
+  "theme_color": "#101214",
+  "description": "A personal Tabata and HIIT interval timer.",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101214">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Interval Pro">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon.svg">
+<link rel="stylesheet" href="styles.css">
+<title>Interval Pro</title>
+</head>
+<body>
+<main class="app">
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">IP</span><div><strong>INTERVAL PRO</strong><small>TRAINING TIMER</small></div></div>
+    <button class="icon-btn" id="settingsBtn" aria-label="Settings">⚙</button>
+  </header>
+
+  <section class="screen active" id="timerScreen">
+    <div class="eyebrow" id="phaseLabel">READY WHEN YOU ARE</div>
+    <div class="timer-wrap">
+      <svg class="ring" viewBox="0 0 300 300" aria-hidden="true">
+        <circle class="ring-track" cx="150" cy="150" r="132"/>
+        <circle class="ring-progress" id="progressRing" cx="150" cy="150" r="132"/>
+      </svg>
+      <div class="timer-center">
+        <div class="round-label" id="roundLabel">ROUND 1 / 8</div>
+        <div class="time" id="timeDisplay">00:20</div>
+        <div class="phase-pill" id="phasePill">WORK</div>
+      </div>
+    </div>
+    <div class="next-line"><span>NEXT</span><strong id="nextLabel">REST · 00:10</strong></div>
+    <div class="controls">
+      <button class="secondary" id="resetBtn">↺ <span>RESET</span></button>
+      <button class="primary" id="startBtn"><span id="startIcon">▶</span><span id="startText">START</span></button>
+      <button class="secondary" id="skipBtn">» <span>SKIP</span></button>
+    </div>
+    <div class="mini-stats">
+      <div><strong id="totalRounds">8</strong><span>ROUNDS</span></div>
+      <div><strong id="totalDuration">04:00</strong><span>TOTAL TIME</span></div>
+      <div><strong id="elapsed">00:00</strong><span>ELAPSED</span></div>
+    </div>
+  </section>
+
+  <section class="screen" id="setupScreen">
+    <div class="section-heading"><div><div class="eyebrow">MAKE IT YOURS</div><h1>Workout setup</h1></div></div>
+    <div class="preset-row">
+      <button class="preset selected" data-preset="tabata"><b>Classic Tabata</b><small>20s work · 10s rest · 8 rounds</small></button>
+      <button class="preset" data-preset="hiit"><b>HIIT 30/30</b><small>30s work · 30s rest · 10 rounds</small></button>
+      <button class="preset" data-preset="custom"><b>Custom</b><small>Build your own intervals</small></button>
+    </div>
+    <div class="settings-card">
+      <label>Preparation <output id="prepOut">10 sec</output></label><input id="prep" type="range" min="0" max="60" step="5" value="10">
+      <label>Work interval <output id="workOut">20 sec</output></label><input id="work" type="range" min="5" max="180" step="5" value="20">
+      <label>Rest interval <output id="restOut">10 sec</output></label><input id="rest" type="range" min="0" max="180" step="5" value="10">
+      <label>Rounds <output id="roundsOut">8</output></label><input id="rounds" type="range" min="1" max="30" value="8">
+      <label>Sets <output id="setsOut">1</output></label><input id="sets" type="range" min="1" max="10" value="1">
+      <label>Rest between sets <output id="setRestOut">60 sec</output></label><input id="setRest" type="range" min="0" max="300" step="5" value="60">
+    </div>
+    <div class="setup-actions"><button class="secondary wide" id="savePresetBtn">＋ SAVE WORKOUT</button><button class="primary wide" id="applyBtn">APPLY SETTINGS</button></div>
+    <div class="saved-area"><h2>Saved workouts</h2><div id="savedList" class="saved-list"><p class="muted">Your saved workouts will appear here.</p></div></div>
+  </section>
+
+  <section class="screen" id="historyScreen">
+    <div class="eyebrow">YOUR TRAINING</div><h1>Workout history</h1>
+    <div class="history-summary"><div><strong id="sessionCount">0</strong><span>SESSIONS</span></div><div><strong id="totalMinutes">0</strong><span>MINUTES</span></div></div>
+    <div id="historyList" class="history-list"><p class="muted">Complete a workout and it will show up here.</p></div>
+    <button class="text-btn" id="clearHistory">Clear history</button>
+  </section>
+
+  <nav class="tabbar">
+    <button class="tab active" data-screen="timerScreen"><span>◷</span>TIMER</button>
+    <button class="tab" data-screen="setupScreen"><span>☷</span>SETUP</button>
+    <button class="tab" data-screen="historyScreen"><span>▤</span>HISTORY</button>
+  </nav>
+</main>
+
+<div class="modal hidden" id="settingsModal">
+  <div class="modal-card"><div class="modal-head"><h2>Timer settings</h2><button class="icon-btn" id="closeSettings">✕</button></div>
+    <label class="toggle-row">Voice countdown <input type="checkbox" id="voiceToggle" checked></label>
+    <label class="toggle-row">Sound cues <input type="checkbox" id="soundToggle" checked></label>
+    <p class="muted tiny">Keep this app open while training. iPhone may pause browser timers when the app is sent to the background.</p>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>
