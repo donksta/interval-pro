@@ -7,13 +7,16 @@ const fmt=s=>{s=Math.max(0,Math.ceil(s));return `${String(Math.floor(s/60)).padS
 const totalSecs=()=>cfg.sets*(cfg.rounds*(cfg.work+cfg.rest)-cfg.rest)+Math.max(0,cfg.sets-1)*cfg.setRest;
 function updateStats(){ $('totalRounds').textContent=cfg.rounds*cfg.sets; $('totalDuration').textContent=fmt(totalSecs()+cfg.prep); $('elapsed').textContent=fmt(elapsedBase+(running?(Date.now()-runStartedAt)/1000:0));}
 function updateUI(){
- $('timeDisplay').textContent=fmt(remaining); $('roundLabel').textContent=`ROUND ${round} / ${cfg.rounds} · SET ${set}/${cfg.sets}`;
- $('phaseLabel').textContent=phase==='done'?'WORKOUT COMPLETE':phase==='prep'?'GET READY':phase==='work'?'WORK INTERVAL':'RECOVERY';
- $('phasePill').textContent=phase==='prep'?'PREP':phase==='done'?'DONE':phase.toUpperCase();
+ $('timeDisplay').textContent=fmt(remaining); $('roundLabel').textContent=`EXERCISE ${round} / ${cfg.rounds} · ROUND ${set}/${cfg.sets}`;
+ $('phaseLabel').textContent=phase==='done'?'WORKOUT COMPLETE':phase==='prep'?'GET READY':phase==='work'?'WORK INTERVAL':phase==='setrest'?'REST BETWEEN ROUNDS':'RECOVERY';
+ $('phasePill').textContent=phase==='prep'?'PREP':phase==='done'?'DONE':phase==='setrest'?'ROUND REST':phase.toUpperCase();
  $('nextLabel').textContent=phase==='work'?`REST · ${fmt(cfg.rest)}`:phase==='rest'?'WORK · '+fmt(cfg.work):phase==='prep'?'WORK · '+fmt(cfg.work):'—';
  document.querySelector('.timer-wrap').classList.toggle('phase-rest',phase==='rest');
  document.querySelector('.timer-wrap').classList.toggle('phase-prep',phase==='prep');
+ document.querySelector('.timer-wrap').classList.toggle('phase-setrest',phase==='setrest');
  document.querySelector('.timer-wrap').classList.toggle('phase-done',phase==='done');
+ document.body.classList.remove('phase-work','phase-rest','phase-prep','phase-setrest','phase-done');
+ document.body.classList.add('phase-'+(phase==='work'?'work':phase));
  $('progressRing').style.strokeDasharray=circumference;
  $('progressRing').style.strokeDashoffset=circumference*(1-(phaseDuration?remaining/phaseDuration:0));
  $('startText').textContent=running?'PAUSE':phase==='done'?'AGAIN':elapsedBase?'RESUME':'START';
@@ -57,25 +60,34 @@ function tick(){
 function advance(){
  if(phase==='prep'){setPhase('work',cfg.work);cue('WORK');return}
  if(phase==='work'){
-   if(cfg.rest>0){setPhase('rest',cfg.rest);cue('REST');return}
-   phase='rest';
- }
- if(phase==='rest'){
-   if(round<cfg.rounds){round++;setPhase('work',cfg.work);cue('WORK');return}
-   if(set<cfg.sets){
-     set++;round=1;
-     if(cfg.setRest>0){
-       setPhase('setrest',cfg.setRest);
-       $('phaseLabel').textContent='REST BETWEEN SETS';
-       $('phasePill').textContent='SET REST';
-       $('nextLabel').textContent='NEXT · WORK';
-       cue('REST');return;
-     }
-     setPhase('work',cfg.work);cue('WORK');return;
+   // Only insert a normal rest between rounds, never after the final round of a set.
+   if(round<cfg.rounds){
+     setPhase('rest',cfg.rest);
+     if(cfg.rest>0)cue('REST');
+     else advance();
+     return;
    }
+   // At the end of a set, use exactly one between-set rest if another set follows.
+   if(set<cfg.sets){
+     setPhase('setrest',cfg.setRest);
+     $('phaseLabel').textContent='REST BETWEEN ROUNDS';
+     $('phasePill').textContent='ROUND REST';
+     $('nextLabel').textContent='NEXT · WORK';
+     if(cfg.setRest>0)cue('REST');
+     else advance();
+     return;
+   }
+   // Final work interval: finish immediately, with no trailing rest.
    finish();return;
  }
- if(phase==='setrest'){round=1;setPhase('work',cfg.work);cue('WORK');return}
+ if(phase==='rest'){
+   round++;
+   setPhase('work',cfg.work);cue('WORK');return;
+ }
+ if(phase==='setrest'){
+   set++;round=1;
+   setPhase('work',cfg.work);cue('WORK');return;
+ }
 }
 function finish(){
  if(running){
@@ -87,7 +99,7 @@ function finish(){
  beep(1100,.35);speak('Workout complete. Great work.');
  const seconds=Math.round(elapsedBase);
  const duration=Math.round(seconds/60);
- history.unshift({date:new Date().toISOString(),rounds:cfg.rounds*cfg.sets,minutes:duration,seconds,work:cfg.work,rest:cfg.rest});
+ history.unshift({date:new Date().toISOString(),exercises:cfg.rounds*cfg.sets,rounds:cfg.sets,minutes:duration,seconds,work:cfg.work,rest:cfg.rest});
  history=history.slice(0,100);localStorage.setItem('ip_history',JSON.stringify(history));renderHistory();toast('Workout saved to history');
 }
 function reset(){
@@ -99,8 +111,8 @@ function toast(t){$('toast').textContent=t;$('toast').classList.add('show');setT
 function readCfg(){for(let k of Object.keys(cfg))cfg[k]=Number($(k).value);reset();updateOutputs();}
 function updateOutputs(){for(let k of Object.keys(cfg)){$(k+'Out').textContent=k==='rounds'||k==='sets'?cfg[k]:cfg[k]+' sec';}updateStats();}
 function fillInputs(){for(let k of Object.keys(cfg))$(k).value=cfg[k];updateOutputs();}
-function renderSaved(){let box=$('savedList');box.innerHTML='';if(!saved.length){box.innerHTML='<p class="muted">Your saved workouts will appear here.</p>';return}saved.forEach((s,i)=>{let el=document.createElement('div');el.className='saved-item';el.innerHTML=`<div><strong>${escapeHtml(s.name)}</strong><small>${s.work}s work · ${s.rest}s rest · ${s.rounds} rounds · ${s.sets} sets</small></div><button data-i="${i}">LOAD</button>`;el.querySelector('button').onclick=()=>{cfg={...s.cfg};fillInputs();document.querySelectorAll('.preset').forEach(x=>x.classList.remove('selected'));toast('Workout loaded')};box.append(el)})}
-function renderHistory(){let box=$('historyList');box.innerHTML='';$('sessionCount').textContent=history.length;$('totalMinutes').textContent=Math.round(history.reduce((a,h)=>a+(h.seconds??h.minutes*60),0)/60);if(!history.length){box.innerHTML='<p class="muted">Complete a workout and it will show up here.</p>';return}history.forEach(h=>{let el=document.createElement('div');el.className='history-item';let d=new Date(h.date);el.innerHTML=`<div><strong>${h.rounds} rounds · ${h.work}/${h.rest}</strong><small>${d.toLocaleDateString()} · ${d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</small></div><b>${h.seconds!==undefined?fmt(h.seconds):h.minutes+' MIN'}</b>`;box.append(el)})}
+function renderSaved(){let box=$('savedList');box.innerHTML='';if(!saved.length){box.innerHTML='<p class="muted">Your saved workouts will appear here.</p>';return}saved.forEach((s,i)=>{let el=document.createElement('div');el.className='saved-item';el.innerHTML=`<div><strong>${escapeHtml(s.name)}</strong><small>${s.work}s work · ${s.rest}s rest · ${s.rounds} exercises · ${s.sets} rounds</small></div><button data-i="${i}">LOAD</button>`;el.querySelector('button').onclick=()=>{cfg={...s.cfg};fillInputs();document.querySelectorAll('.preset').forEach(x=>x.classList.remove('selected'));toast('Workout loaded')};box.append(el)})}
+function renderHistory(){let box=$('historyList');box.innerHTML='';$('sessionCount').textContent=history.length;$('totalMinutes').textContent=Math.round(history.reduce((a,h)=>a+(h.seconds??h.minutes*60),0)/60);if(!history.length){box.innerHTML='<p class="muted">Complete a workout and it will show up here.</p>';return}history.forEach(h=>{let el=document.createElement('div');el.className='history-item';let d=new Date(h.date);el.innerHTML=`<div><strong>${h.exercises??h.rounds} exercises · ${h.rounds&&h.exercises? h.rounds+' rounds · ':''}${h.work}/${h.rest}</strong><small>${d.toLocaleDateString()} · ${d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</small></div><b>${h.seconds!==undefined?fmt(h.seconds):h.minutes+' MIN'}</b>`;box.append(el)})}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 $('startBtn').onclick=start;$('resetBtn').onclick=reset;$('skipBtn').onclick=skip;
 document.querySelectorAll('[data-screen]').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(b.dataset.screen).classList.add('active')});
