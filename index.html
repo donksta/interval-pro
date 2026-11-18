@@ -27,7 +27,7 @@
         <circle class="ring-progress" id="progressRing" cx="150" cy="150" r="132"/>
       </svg>
       <div class="timer-center">
-        <div class="round-label" id="roundLabel">ROUND 1 / 8</div>
+        <div class="round-label" id="roundLabel">EXERCISE 1 / 8</div>
         <div class="time" id="timeDisplay">00:20</div>
         <div class="phase-pill" id="phasePill">WORK</div>
       </div>
@@ -39,7 +39,7 @@
       <button class="secondary" id="skipBtn">» <span>SKIP</span></button>
     </div>
     <div class="mini-stats">
-      <div><strong id="totalRounds">8</strong><span>ROUNDS</span></div>
+      <div><strong id="totalRounds">8</strong><span>EXERCISES</span></div>
       <div><strong id="totalDuration">04:00</strong><span>TOTAL TIME</span></div>
       <div><strong id="elapsed">00:00</strong><span>ELAPSED</span></div>
     </div>
@@ -48,17 +48,17 @@
   <section class="screen" id="setupScreen">
     <div class="section-heading"><div><div class="eyebrow">MAKE IT YOURS</div><h1>Workout setup</h1></div></div>
     <div class="preset-row">
-      <button class="preset selected" data-preset="tabata"><b>Classic Tabata</b><small>20s work · 10s rest · 8 rounds</small></button>
-      <button class="preset" data-preset="hiit"><b>HIIT 30/30</b><small>30s work · 30s rest · 10 rounds</small></button>
+      <button class="preset selected" data-preset="tabata"><b>Classic Tabata</b><small>20s work · 10s rest · 8 exercises</small></button>
+      <button class="preset" data-preset="hiit"><b>HIIT 30/30</b><small>30s work · 30s rest · 10 exercises</small></button>
       <button class="preset" data-preset="custom"><b>Custom</b><small>Build your own intervals</small></button>
     </div>
     <div class="settings-card">
       <label>Preparation <output id="prepOut">10 sec</output></label><input id="prep" type="range" min="0" max="60" step="5" value="10">
       <label>Work interval <output id="workOut">20 sec</output></label><input id="work" type="range" min="5" max="180" step="5" value="20">
       <label>Rest interval <output id="restOut">10 sec</output></label><input id="rest" type="range" min="0" max="180" step="5" value="10">
-      <label>Rounds <output id="roundsOut">8</output></label><input id="rounds" type="range" min="1" max="30" value="8">
-      <label>Sets <output id="setsOut">1</output></label><input id="sets" type="range" min="1" max="10" value="1">
-      <label>Rest between sets <output id="setRestOut">60 sec</output></label><input id="setRest" type="range" min="0" max="300" step="5" value="60">
+      <label>Exercise <output id="roundsOut">8</output></label><input id="rounds" type="range" min="1" max="30" value="8">
+      <label>Rounds <output id="setsOut">1</output></label><input id="sets" type="range" min="1" max="10" value="1">
+      <label>Rest between rounds <output id="setRestOut">60 sec</output></label><input id="setRest" type="range" min="0" max="300" step="5" value="60">
     </div>
     <div class="setup-actions"><button class="secondary wide" id="savePresetBtn">＋ SAVE WORKOUT</button><button class="primary wide" id="applyBtn">APPLY SETTINGS</button></div>
     <div class="saved-area"><h2>Saved workouts</h2><div id="savedList" class="saved-list"><p class="muted">Your saved workouts will appear here.</p></div></div>
@@ -86,6 +86,6 @@
   </div>
 </div>
 <div class="toast" id="toast"></div>
-<script src="app.js?v=5"></script>
+<script src="app.js?v=8"></script>
 </body>
 </html>
